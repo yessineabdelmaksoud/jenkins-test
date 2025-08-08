@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Install dependencies') {
             steps {
-                bat 'pip install -r requirements.tx'
+                bat 'pip install -r requirements.txt'
             }
         }
         stage('Run Tests') {
