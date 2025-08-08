@@ -2,6 +2,11 @@ pipeline {
     agent any
 
     stages {
+        stage('Build') {
+            stepstttt {  # Faute volontaire : "steps" mal orthographié
+                sh 'echo "Hello"'
+            }
+        }
         stage('Install dependencies') {
             steps {
                 bat 'pip install -r requirements.txt'
