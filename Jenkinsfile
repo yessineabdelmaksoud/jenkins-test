@@ -18,5 +18,10 @@ pipeline {
                 // Ici tu pourrais lancer ton app avec gunicorn, docker, etc.
             }
         }
+        stage('Fail Me') {
+            steps {
+                bat 'exit 1' 
+    }
+}
     }
 }
