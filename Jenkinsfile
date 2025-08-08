@@ -7,33 +7,38 @@ pipeline {
                 bat 'pip install -r requirements.txt'
             }
         }
-        
+
         stage('Run Tests') {
             steps {
                 bat 'pytest'
             }
         }
-        
+
         stage('Deploy') {
             steps {
                 bat 'echo "Déploiement de l\'application..."'
             }
         }
-        
+
         stage('Fail Me') {
             steps {
-                // Méthode 1 : Exit code 1 + errorHandler
-                bat 'exit 1' 
-                // OU Méthode 2 : Commande qui échoue
-                bat 'python -c "raise Exception(\'Erreur simulée!\')"'
+                script {
+                    // Cette commande va faire échouer le build
+                    bat 'exit 1' 
+                    // Alternative : bat 'python -c "exit(1)"'
+                }
             }
         }
     }
-    
-    // Optionnel : Comportement en cas d'échec
+
+    // Ceci force Jenkins à échouer si une étape échoue
     post {
-        failure {
-            echo 'Le build a échoué (comme prévu pour le test).'
+        always {
+            script {
+                if (currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE') {
+                    echo 'Build a échoué comme prévu'
+                }
+            }
         }
     }
 }
