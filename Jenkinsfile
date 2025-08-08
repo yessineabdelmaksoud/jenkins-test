@@ -2,48 +2,74 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
-            stepstttt {  # Faute volontaire : "steps" mal orthographié
-                sh 'echo "Hello"'
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
             }
         }
-        stage('Install dependencies') {
+
+        stage('Setup Python') {
             steps {
-                bat 'pip install -r requirements.txt'
+                echo 'Setting up Python environment...'
+                bat 'python --version'
+                bat 'pip --version'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing dependencies...'
+                bat 'pip install flask pytest'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'pytest'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                bat 'echo "Déploiement de l\'application..."'
-            }
-        }
-
-        stage('Fail Me') {
-            steps {
+                echo 'Running tests...'
                 script {
-                    // Cette commande va faire échouer le build
-                    bat 'exit 1' 
-                    // Alternative : bat 'python -c "exit(1)"'
+                    try {
+                        // Exécution des tests
+                        bat 'python -m pytest test_app.py -v'
+                        
+                        // Simulation d'échec (optionnel)
+                        bat '''
+                            echo Simulating a test failure...
+                            echo These would be your test logs showing what went wrong
+                            echo ERROR: Test "test_expected_failure" failed
+                            echo AssertionError: Expected "Wrong Text" but got "Hello, Jenkins Pipeline!"
+                            exit /b 1
+                        '''
+                    } catch (Exception e) {
+                        echo "Caught exception: ${e}"
+                        currentBuild.result = 'FAILURE'
+                        error('Tests failed - check logs for details')
+                    }
                 }
+            }
+        }
+
+        stage('Run Application') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                echo 'Starting application...'
+                bat 'start /B python app.py'
             }
         }
     }
 
-    // Ceci force Jenkins à échouer si une étape échoue
     post {
+        failure {
+            echo 'Pipeline failed - sending notifications...'
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
         always {
-            script {
-                if (currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE') {
-                    echo 'Build a échoué comme prévu'
-                }
-            }
+            echo 'Cleaning up...'
+            bat 'taskkill /F /IM python.exe /T || exit 0'
         }
     }
 }
