@@ -1,8 +1,9 @@
 Démarré par l'utilisateur yessine abdelmaksoud
+Notifying endpoint with url 'http://localhost:8000/build-finished'
 Obtained Jenkinsfile from git https://github.com/yessineabdelmaksoud/jenkins-fail-pipeline
 [Pipeline] Start of Pipeline
 [Pipeline] node
-Running on Jenkins in C:\ProgramData\Jenkins\.jenkins\workspace\bot1
+Running on Jenkins in C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender
 [Pipeline] {
 [Pipeline] stage
 [Pipeline] { (Declarative: Checkout SCM)
@@ -10,7 +11,7 @@ Running on Jenkins in C:\ProgramData\Jenkins\.jenkins\workspace\bot1
 Selected Git installation does not exist. Using Default
 The recommended git tool is: NONE
 No credentials specified
- > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\bot1\.git # timeout=10
+ > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\.git # timeout=10
 Fetching changes from the remote Git repository
  > git.exe config remote.origin.url https://github.com/yessineabdelmaksoud/jenkins-fail-pipeline # timeout=10
 Fetching upstream changes from https://github.com/yessineabdelmaksoud/jenkins-fail-pipeline
@@ -35,7 +36,7 @@ Commit message: "Update Jenkinsfile"
 Selected Git installation does not exist. Using Default
 The recommended git tool is: NONE
 No credentials specified
- > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\bot1\.git # timeout=10
+ > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\.git # timeout=10
 Fetching changes from the remote Git repository
  > git.exe config remote.origin.url https://github.com/yessineabdelmaksoud/jenkins-fail-pipeline # timeout=10
 Fetching upstream changes from https://github.com/yessineabdelmaksoud/jenkins-fail-pipeline
@@ -55,10 +56,10 @@ Commit message: "Update Jenkinsfile"
 🚀 Lancement de app.py
 [Pipeline] bat
 
-C:\ProgramData\Jenkins\.jenkins\workspace\bot1>python main.py 
+C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender>python main.py 
 D�but de l'application
 Traceback (most recent call last):
-  File "C:\ProgramData\Jenkins\.jenkins\workspace\bot1\main.py", line 6, in <module>
+  File "C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\main.py", line 6, in <module>
     x = 10 / 0
         ~~~^~~
 ZeroDivisionError: division by zero
@@ -76,4 +77,5 @@ ZeroDivisionError: division by zero
 [Pipeline] // node
 [Pipeline] End of Pipeline
 ERROR: script returned exit code 1
+Notifying endpoint with url 'http://localhost:8000/build-finished'
 Finished: FAILURE

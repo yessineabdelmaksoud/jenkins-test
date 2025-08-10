@@ -20,7 +20,7 @@ async def build_finished(request: Request):
 
     # Lancer ton script d'extraction
     try:
-        subprocess.run(["python", "tiggers-jenkinsfile.py", job_name, str(build_number)])
+        subprocess.run(["python", "triggers-jenkinsfile.py", job_name, str(build_number)])
         # Lancer le script de récupération des logs
         subprocess.run(["python", "triggers-logs.py", job_name, str(build_number)])
     except Exception as e:
