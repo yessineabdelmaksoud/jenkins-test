@@ -1,11 +1,8 @@
-from flask import Flask
+# app.py
 
-app = Flask(__name__)
+print("Début de l'application")
 
-@app.route("/")
-def home():
-    raise ValueError("💥 Erreur simulée !") 
-    return "Hello, Jenkins Pipeline!"
+# Erreur : division par zéro
+x = 10 / 0
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+print("Fin de l'application")  # Cette ligne ne sera jamais atteinte
