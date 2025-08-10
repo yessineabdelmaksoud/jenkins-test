@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Étape de build') {
+            steps {
+                echo 'Construction en cours...'
+            }
+        }
+
+        stage('Étape de test') {
+            steps {
+                echo 'Lancement des tests...'
+                // On force un échec ici :
+                error 'Échec simulé dans l’étape de test'
+            }
+        }
+
+        stage('Étape de déploiement') {
+            steps {
+                echo 'Déploiement...'
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Le pipeline a échoué comme prévu.'
+        }
+    }
+}
