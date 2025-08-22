@@ -1,0 +1,26 @@
+{
+  "case_insensitive": [
+    "production",
+    "prod",
+    "staging",
+    "dev-secret",
+    "admin-key",
+    "internal-api",
+    "confidential",
+    "privileged",
+    "sensitive",
+    "yessine",
+    "company-internal",
+    "private-key",
+    "secret-token",
+    "database-password",
+    "api-secret"
+  ],
+  "case_sensitive": [
+    "PROD_DB_PASSWORD",
+    "SECRET_API_KEY",
+    "PRIVATE_TOKEN",
+    "JENKINS_API_TOKEN",
+    "BUILD_SECRET"
+  ]
+}

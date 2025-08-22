@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jenkins Agent Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-cogs"></i> Jenkins Agent Dashboard</h1>
+                <div class="header-actions">
+                    <button id="refreshBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <div class="status-indicator" id="connectionStatus">
+                        <i class="fas fa-circle"></i> Connected
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="successRate">--%</h3>
+                        <p>Success Rate</p>
+                        <span class="stat-count" id="successCount">0 builds</span>
+                    </div>
+                </div>
+
+                <div class="stat-card failure">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="failureRate">--%</h3>
+                        <p>Failure Rate</p>
+                        <span class="stat-count" id="failureCount">0 builds</span>
+                    </div>
+                </div>
+
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalBuilds">0</h3>
+                        <p>Total Builds</p>
+                        <span class="stat-count" id="lastUpdate">Never</span>
+                    </div>
+                </div>
+
+                <div class="stat-card retries">
+                    <div class="stat-icon">
+                        <i class="fas fa-redo"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="retryCount">0</h3>
+                        <p>Retries</p>
+                        <span class="stat-count" id="retryRate">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="statusFilter">Filter by Status:</label>
+                    <select id="statusFilter">
+                        <option value="all">All Builds</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                        <option value="running">Running</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Search:</label>
+                    <input type="text" id="searchInput" placeholder="Search by job name or build number...">
+                </div>
+            </div>
+        </section>
+
+        <!-- Builds List -->
+        <section class="builds-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Recent Builds</h2>
+                <div class="loading" id="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+
+            <div class="builds-container" id="buildsContainer">
+                <!-- Build items will be dynamically inserted here -->
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>No builds found</h3>
+                <p>No build data available. Check your Jenkins connection.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Build Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Build Details</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content" id="modalContent">
+                <!-- Build details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

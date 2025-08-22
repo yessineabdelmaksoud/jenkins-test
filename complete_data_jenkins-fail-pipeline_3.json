@@ -1,0 +1,23 @@
+{
+  "build_number": 3,
+  "status": "",
+  "timestamp": "",
+  "user": "",
+  "git_repo": "",
+  "commit": "",
+  "jenkinsfile": "",
+  "console_log": "",
+  "node_name": "contrôleur",
+  "node_status": "online",
+  "executors": 2,
+  "total_memory": 0,
+  "available_memory": 0,
+  "total_swap_space": 0,
+  "available_swap_space": 0,
+  "disk_space_temp": {
+    "available": 73198067712,
+    "total": 73198067712,
+    "threshold": 0
+  },
+  "os": "le nœud principal du contrôleur Jenkins"
+}

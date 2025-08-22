@@ -1,0 +1,23 @@
+{
+  "build_number": 3,
+  "status": "SUCCESS",
+  "timestamp": 1754732532895,
+  "user": "yessine abdelmaksoud",
+  "git_repo": "https://github.com/yessineabdelmaksoud/jenkins-test",
+  "commit": "ebc2a6fdc964808c09d9492515e2dfdad527be69",
+  "jenkinsfile": "",
+  "console_log": "Démarré par l'utilisateur yessine abdelmaksoud\r\nExécution en tant que SYSTEM\r\nEn cours de construction dans le répertoire de travail C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\yessine\r\nThe recommended git tool is: NONE\r\nNo credentials specified\r\n > git.exe rev-parse --resolve-git-dir C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\yessine\\.git # timeout=10\r\nFetching changes from the remote Git repository\r\n > git.exe config remote.origin.url https://github.com/yessineabdelmaksoud/jenkins-test # timeout=10\r\nFetching upstream changes from https://github.com/yessineabdelmaksoud/jenkins-test\r\n > git.exe --version # timeout=10\r\n > git --version # 'git version 2.50.1.windows.1'\r\n > git.exe fetch --tags --force --progress -- https://github.com/yessineabdelmaksoud/jenkins-test +refs/heads/*:refs/remotes/origin/* # timeout=10\r\n > git.exe rev-parse \"refs/remotes/origin/master^{commit}\" # timeout=10\r\nChecking out Revision ebc2a6fdc964808c09d9492515e2dfdad527be69 (refs/remotes/origin/master)\r\n > git.exe config core.sparsecheckout # timeout=10\r\n > git.exe checkout -f ebc2a6fdc964808c09d9492515e2dfdad527be69 # timeout=10\r\nCommit message: \"change to see error\"\r\n > git.exe rev-list --no-walk ebc2a6fdc964808c09d9492515e2dfdad527be69 # timeout=10\r\nFinished: SUCCESS\r\n",
+  "node_name": "contrôleur",
+  "node_status": "online",
+  "executors": 2,
+  "total_memory": 0,
+  "available_memory": 0,
+  "total_swap_space": 0,
+  "available_swap_space": 0,
+  "disk_space_temp": {
+    "available": 73198067712,
+    "total": 73198067712,
+    "threshold": 0
+  },
+  "os": "le nœud principal du contrôleur Jenkins"
+}

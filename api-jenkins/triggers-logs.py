@@ -16,12 +16,12 @@ def extract_build_log(jenkins_url, job_name, build_number, username, api_token):
 # Exemple d'utilisation
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) >= 3:
-        jenkins_url = 'http://localhost:8080'
-        job_name = sys.argv[1]
-        build_number = sys.argv[2]
-        username = 'yessine'
-        api_token = '11f9fd1c763a2051af553ee0b8aba3889d'
-        extract_build_log(jenkins_url, job_name, build_number, username, api_token)
-    else:
-        print("Usage: python triggers-logs.py <job_name> <build_number>")
+    
+    jenkins_url = 'http://localhost:8080'
+    job_name = "yessine"
+    build_number = 1
+    username = 'yessine'
+    api_token = '11f9fd1c763a2051af553ee0b8aba3889d'
+    extract_build_log(jenkins_url, job_name, build_number, username, api_token)
+
+    print("Usage: python triggers-logs.py <job_name> <build_number>")

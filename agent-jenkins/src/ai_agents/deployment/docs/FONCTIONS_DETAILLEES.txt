@@ -1,0 +1,477 @@
+================================================================================
+                        DÉTAIL DES FONCTIONS PRINCIPALES
+================================================================================
+
+Ce document détaille toutes les fonctions importantes de l'API, leurs
+paramètres, valeurs de retour, et exemples d'utilisation.
+
+================================================================================
+1. FONCTIONS DE CONFIGURATION (core/config.py)
+================================================================================
+
+1.1. get_settings() -> Settings
+-------------------------------
+RÔLE : Retourne l'instance singleton des paramètres de configuration
+
+PARAMÈTRES : Aucun
+
+RETOUR : Instance de la classe Settings avec tous les paramètres
+
+EXEMPLE :
+```python
+from ai_agents.deployment.api_agent.core.config import get_settings
+
+settings = get_settings()
+print(f"Port: {settings.PORT}")
+print(f"Debug: {settings.DEBUG}")
+print(f"API Key configurée: {bool(settings.OPENAI_API_KEY)}")
+```
+
+CHAMPS SETTINGS :
+- HOST: str = "0.0.0.0"
+- PORT: int = 8000
+- DEBUG: bool = False
+- ALLOWED_HOSTS: List[str] = ["*"]
+- API_PREFIX: str = "/api"
+- AGENTS_CONFIG_DIR: str = "src/ai_agents/agents"
+- OPENAI_API_KEY: str (OBLIGATOIRE)
+- MAX_EXECUTION_TIME: int = 300
+- LOG_LEVEL: str = "INFO"
+
+================================================================================
+2. FONCTIONS DE SERVICE (services/agent_service.py)
+================================================================================
+
+2.1. AgentService.__init__()
+----------------------------
+RÔLE : Initialise le service de gestion des agents
+
+ATTRIBUTS CRÉÉS :
+- self.settings : Configuration de l'application
+- self.running_agents : Dict des agents en cours d'exécution
+- self.agent_runs : Dict de toutes les exécutions (historique)
+
+2.2. list_agents() -> List[AgentInfo]
+------------------------------------
+RÔLE : Liste tous les agents disponibles depuis le registry
+
+PARAMÈTRES : Aucun
+
+RETOUR : Liste d'objets AgentInfo
+
+LOGIQUE :
+1. Parcourt AGENT_REGISTRY
+2. Pour chaque agent, crée un AgentInfo
+3. Gère les erreurs de chargement
+4. Retourne la liste filtrée
+
+EXEMPLE :
+```python
+service = AgentService()
+agents = await service.list_agents()
+for agent in agents:
+    print(f"{agent.id}: {agent.name} ({agent.status})")
+```
+
+2.3. get_agent_details(agent_id: str) -> Optional[AgentDetailedInfo]
+-------------------------------------------------------------------
+RÔLE : Obtient les détails complets d'un agent spécifique
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+
+RETOUR : 
+- AgentDetailedInfo si trouvé
+- None si agent inexistant
+
+LOGIQUE :
+1. Vérifie que agent_id existe dans AGENT_REGISTRY
+2. Charge la configuration via agent_class.load_config()
+3. Crée un objet AgentConfig
+4. Retourne AgentDetailedInfo avec config + métadonnées
+
+EXEMPLE :
+```python
+details = await service.get_agent_details("sales_assistant")
+if details:
+    print(f"Workflow: {details.config.workflow}")
+    print(f"Model: {details.config.model}")
+```
+
+2.4. execute_agent(agent_id, run_id, input_data, config_override, timeout)
+--------------------------------------------------------------------------
+RÔLE : FONCTION CŒUR - Exécute un agent de manière asynchrone
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+- run_id (str) : UUID unique pour cette exécution
+- input_data (Dict[str, Any]) : Données d'entrée pour l'agent
+- config_override (Optional[Dict]) : Surcharge de configuration
+- timeout (Optional[int]) : Timeout en secondes
+
+RETOUR : None (fonction asynchrone, modifie self.agent_runs)
+
+LOGIQUE DÉTAILLÉE :
+1. Initialise AgentRunResponse avec status=RUNNING
+2. Ajoute à self.running_agents et self.agent_runs
+3. Charge l'agent via get_agent(agent_id)
+4. Applique config_override si fournie
+5. Exécute agent.run(input_data) avec asyncio.wait_for()
+6. Gère les timeouts et exceptions
+7. Met à jour le statut final (COMPLETED/FAILED)
+8. Nettoie self.running_agents
+9. Persiste le résultat dans self.agent_runs
+
+GESTION D'ERREURS :
+- TimeoutError → status=FAILED, error="Execution timed out"
+- Exception → status=FAILED, error=str(exception)
+- Succès → status=COMPLETED, result=agent_result
+
+EXEMPLE :
+```python
+await service.execute_agent(
+    agent_id="sales_assistant",
+    run_id="abc-123",
+    input_data={"customer_query": "Hello"},
+    config_override={"model": {"temperature": 0.9}},
+    timeout=60
+)
+```
+
+2.5. get_agent_status(agent_id, run_id) -> AgentStatusResponse
+-------------------------------------------------------------
+RÔLE : Obtient le statut actuel d'un agent et de ses exécutions
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+- run_id (Optional[str]) : ID d'exécution spécifique (optionnel)
+
+RETOUR : AgentStatusResponse avec statut et détails
+
+LOGIQUE :
+1. Détermine le statut actuel (IDLE par défaut)
+2. Vérifie si l'agent est dans running_agents
+3. Si run_id fourni, cherche cette exécution spécifique
+4. Sinon, prend la dernière exécution
+5. Utilise le statut de l'exécution si terminée
+6. Retourne AgentStatusResponse complet
+
+EXEMPLE :
+```python
+status = await service.get_agent_status("sales_assistant", "abc-123")
+print(f"Agent: {status.agent_id}")
+print(f"Status: {status.status}")
+if status.current_run:
+    print(f"Run status: {status.current_run.status}")
+```
+
+2.6. list_agent_runs(agent_id: str) -> List[AgentRunResponse]
+------------------------------------------------------------
+RÔLE : Liste toutes les exécutions d'un agent
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+
+RETOUR : Liste des exécutions triées par date (plus récent en premier)
+
+LOGIQUE :
+1. Vérifie si agent_id existe dans self.agent_runs
+2. Récupère toutes les exécutions
+3. Trie par started_at décroissant
+4. Retourne la liste
+
+EXEMPLE :
+```python
+runs = await service.list_agent_runs("sales_assistant")
+for run in runs:
+    print(f"Run {run.run_id}: {run.status} at {run.started_at}")
+```
+
+2.7. get_run_details(agent_id, run_id) -> Optional[AgentRunResponse]
+-------------------------------------------------------------------
+RÔLE : Obtient les détails d'une exécution spécifique
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+- run_id (str) : Identifiant de l'exécution
+
+RETOUR :
+- AgentRunResponse si trouvé
+- None si inexistant
+
+LOGIQUE :
+1. Vérifie agent_id dans self.agent_runs
+2. Vérifie run_id dans self.agent_runs[agent_id]
+3. Logs de debug pour troubleshooting
+4. Retourne l'objet AgentRunResponse
+
+EXEMPLE :
+```python
+run = await service.get_run_details("sales_assistant", "abc-123")
+if run:
+    print(f"Status: {run.status}")
+    print(f"Result: {run.result}")
+    print(f"Logs: {run.logs}")
+```
+
+2.8. cancel_run(agent_id, run_id) -> bool
+-----------------------------------------
+RÔLE : Annule une exécution en cours
+
+PARAMÈTRES :
+- agent_id (str) : Identifiant de l'agent
+- run_id (str) : Identifiant de l'exécution
+
+RETOUR : bool (True si annulation réussie)
+
+LOGIQUE :
+1. Vérifie si l'exécution est en cours dans running_agents
+2. Met à jour le statut à CANCELLED dans agent_runs
+3. Ajoute un log d'annulation
+4. Nettoie running_agents
+5. Retourne True si succès, False sinon
+
+EXEMPLE :
+```python
+success = await service.cancel_run("sales_assistant", "abc-123")
+if success:
+    print("Exécution annulée avec succès")
+```
+
+================================================================================
+3. FONCTIONS D'ENDPOINTS (api/routes/agents.py)
+================================================================================
+
+3.1. get_agent_service() -> AgentService
+----------------------------------------
+RÔLE : Dependency injection - Retourne l'instance singleton du service
+
+PATTERN SINGLETON :
+```python
+_agent_service = None
+
+def get_agent_service() -> AgentService:
+    global _agent_service
+    if _agent_service is None:
+        _agent_service = AgentService()
+    return _agent_service
+```
+
+UTILISATION : Injecté automatiquement par FastAPI dans chaque endpoint
+
+3.2. list_agents(agent_service) -> AgentListResponse
+---------------------------------------------------
+RÔLE : Endpoint GET /api/agents
+
+PARAMÈTRES :
+- agent_service : Injecté par FastAPI
+
+RETOUR : AgentListResponse (JSON)
+
+LOGIQUE :
+1. Appelle agent_service.list_agents()
+2. Crée AgentListResponse avec agents + total
+3. Gère les exceptions avec HTTP 500
+
+EXEMPLE CURL :
+```bash
+curl -X GET "http://localhost:8000/api/agents"
+```
+
+RÉPONSE :
+```json
+{
+  "agents": [
+    {
+      "id": "sales_assistant",
+      "name": "Sales Assistant",
+      "type": "sales_assistant",
+      "status": "idle"
+    }
+  ],
+  "total": 1
+}
+```
+
+3.3. run_agent(agent_id, request, background_tasks, agent_service)
+-----------------------------------------------------------------
+RÔLE : Endpoint POST /api/agents/{agent_id}/run
+
+PARAMÈTRES :
+- agent_id (str) : Path parameter
+- request (AgentRunRequest) : Body JSON validé par Pydantic
+- background_tasks (BackgroundTasks) : FastAPI background tasks
+- agent_service : Service injecté
+
+RETOUR : AgentRunResponse (statut initial)
+
+LOGIQUE :
+1. Valide que l'agent existe
+2. Génère un UUID pour run_id
+3. Crée AgentRunResponse initial (status=RUNNING)
+4. Lance execute_agent() en arrière-plan
+5. Retourne immédiatement la réponse
+
+EXEMPLE CURL :
+```bash
+curl -X POST "http://localhost:8000/api/agents/sales_assistant/run" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_data": {"customer_query": "Hello"},
+    "timeout": 60
+  }'
+```
+
+RÉPONSE :
+```json
+{
+  "run_id": "abc-123-def-456",
+  "agent_id": "sales_assistant",
+  "status": "running",
+  "started_at": "2024-01-01T10:00:00Z"
+}
+```
+
+3.4. get_agent_status(agent_id, run_id, agent_service)
+------------------------------------------------------
+RÔLE : Endpoint GET /api/agents/{agent_id}/status
+
+PARAMÈTRES :
+- agent_id (str) : Path parameter
+- run_id (Optional[str]) : Query parameter
+- agent_service : Service injecté
+
+RETOUR : AgentStatusResponse
+
+LOGIQUE :
+1. Vérifie que l'agent existe
+2. Appelle agent_service.get_agent_status()
+3. Retourne le statut complet
+
+EXEMPLE CURL :
+```bash
+curl -X GET "http://localhost:8000/api/agents/sales_assistant/status?run_id=abc-123"
+```
+
+================================================================================
+4. FONCTIONS UTILITAIRES
+================================================================================
+
+4.1. setup_logging(log_level) (core/logging.py)
+-----------------------------------------------
+RÔLE : Configure le système de logging
+
+PARAMÈTRES :
+- log_level (Optional[str]) : Niveau de log
+
+LOGIQUE :
+1. Configure le format des logs
+2. Ajoute un handler console
+3. Configure les loggers spécifiques (uvicorn, fastapi)
+
+4.2. AgentAPIClient (examples/api_examples.py)
+----------------------------------------------
+RÔLE : Client Python pour interagir avec l'API
+
+MÉTHODES PRINCIPALES :
+- list_agents() : GET /api/agents
+- get_agent_details(agent_id) : GET /api/agents/{id}
+- run_agent(agent_id, input_data) : POST /api/agents/{id}/run
+- get_agent_status(agent_id, run_id) : GET /api/agents/{id}/status
+- list_agent_runs(agent_id) : GET /api/agents/{id}/runs
+- get_run_details(agent_id, run_id) : GET /api/agents/{id}/runs/{run_id}
+
+EXEMPLE :
+```python
+client = AgentAPIClient("http://localhost:8000")
+agents = client.list_agents()
+result = client.run_agent("sales_assistant", {"query": "test"})
+status = client.get_agent_status("sales_assistant", result['run_id'])
+```
+
+================================================================================
+5. GESTION D'ERREURS DANS LES FONCTIONS
+================================================================================
+
+5.1. TYPES D'EXCEPTIONS GÉRÉES
+------------------------------
+
+HTTPException(404) : Ressource non trouvée
+- Agent inexistant
+- Run inexistant
+
+HTTPException(422) : Données invalides
+- Validation Pydantic échouée
+- Format JSON incorrect
+
+HTTPException(500) : Erreur serveur
+- Exception dans execute_agent()
+- Erreur de configuration
+- Problème de chargement d'agent
+
+5.2. PATTERN DE GESTION D'ERREURS
+---------------------------------
+
+```python
+try:
+    # Logique métier
+    result = await agent_service.some_method()
+    return result
+except HTTPException:
+    # Re-raise les erreurs HTTP
+    raise
+except Exception as e:
+    # Log et convertir en erreur HTTP
+    logger.error(f"Error in endpoint: {str(e)}")
+    raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+```
+
+================================================================================
+6. EXEMPLES D'UTILISATION COMPLÈTE
+================================================================================
+
+6.1. SCÉNARIO COMPLET : EXÉCUTER UN AGENT
+-----------------------------------------
+
+```python
+# 1. Créer le client
+client = AgentAPIClient("http://localhost:8000")
+
+# 2. Lister les agents disponibles
+agents = client.list_agents()
+print(f"Agents disponibles: {[a['id'] for a in agents['agents']]}")
+
+# 3. Obtenir les détails d'un agent
+details = client.get_agent_details("sales_assistant")
+print(f"Configuration: {details['config']['workflow']}")
+
+# 4. Lancer l'exécution
+run_result = client.run_agent(
+    "sales_assistant",
+    {"customer_query": "Je cherche des informations"},
+    timeout=60
+)
+run_id = run_result['run_id']
+print(f"Exécution lancée: {run_id}")
+
+# 5. Surveiller l'exécution
+import time
+while True:
+    status = client.get_agent_status("sales_assistant", run_id)
+    print(f"Statut: {status['status']}")
+    
+    if status.get('current_run'):
+        current_status = status['current_run']['status']
+        if current_status in ['completed', 'failed', 'cancelled']:
+            break
+    time.sleep(1)
+
+# 6. Récupérer les résultats
+final_result = client.get_run_details("sales_assistant", run_id)
+print(f"Résultat final: {final_result['result']}")
+print(f"Logs: {final_result['logs']}")
+```
+
+================================================================================
+FIN DU GUIDE DES FONCTIONS DÉTAILLÉES
+================================================================================

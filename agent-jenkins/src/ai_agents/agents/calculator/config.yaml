@@ -1,0 +1,44 @@
+workflow:
+  entrypoint: start
+  error_node: error_handler
+
+  nodes:
+    - name: start
+      handler: start_node
+      type: entry
+    - name: parse_expression
+      handler: parse_mathematical_expression
+      type: function
+    - name: calculate
+      handler: perform_calculation
+      type: function
+    - name: format_result
+      handler: format_result
+      type: function
+    - name: finish
+      handler: end_node
+      type: exit
+
+  edges:
+    - from: start
+      to: parse_expression
+    - from: parse_expression
+      to: calculate
+    - from: calculate
+      to: format_result
+    - from: format_result
+      to: finish
+
+state_schema:
+  expression: string
+  parsed_expression: object
+  calculation_result: number
+  formatted_result: string
+  error: string
+  operation_type: string
+
+# Pas de modèle OpenAI requis pour cet agent
+model: null
+
+# Pas de mémoire requise pour les calculs simples
+memory: null

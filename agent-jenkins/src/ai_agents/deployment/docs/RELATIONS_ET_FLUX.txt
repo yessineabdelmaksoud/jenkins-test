@@ -1,0 +1,358 @@
+================================================================================
+                    RELATIONS ENTRE FICHIERS ET FLUX DE DONNÉES
+================================================================================
+
+Ce document explique comment les fichiers interagissent entre eux et comment
+les données circulent dans l'API AI Agents.
+
+================================================================================
+1. DIAGRAMME DES RELATIONS ENTRE FICHIERS
+================================================================================
+
+                            ┌─────────────────┐
+                            │   main.py       │
+                            │ (FastAPI App)   │
+                            └─────────┬───────┘
+                                      │ importe
+                            ┌─────────▼───────┐
+                            │ api/routes/     │
+                            │   agents.py     │
+                            └─────────┬───────┘
+                                      │ utilise
+                            ┌─────────▼───────┐
+                            │   services/     │
+                            │ agent_service.py│
+                            └─────────┬───────┘
+                                      │ utilise
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+          ┌─────────▼───────┐ ┌───────▼───────┐ ┌───────▼───────┐
+          │ ai_agents/      │ │ api/models/   │ │ core/         │
+          │ agents/         │ │   agent.py    │ │   config.py   │
+          │ registry.py     │ │ (Validation)  │ │ (Settings)    │
+          └─────────────────┘ └───────────────┘ └───────────────┘
+
+================================================================================
+2. FLUX DE DONNÉES DÉTAILLÉ
+================================================================================
+
+2.1. DÉMARRAGE DE L'APPLICATION
+-------------------------------
+
+1. start_api.py
+   ↓ importe
+2. main.py → create_app()
+   ↓ configure
+3. core/config.py → get_settings()
+   ↓ charge .env
+4. core/logging.py → setup_logging()
+   ↓ configure logs
+5. api/routes/agents.py → router
+   ↓ enregistre endpoints
+6. FastAPI démarre sur HOST:PORT
+
+2.2. REQUÊTE GET /api/agents
+----------------------------
+
+CLIENT
+  ↓ HTTP GET /api/agents
+FASTAPI (main.py)
+  ↓ route vers
+api/routes/agents.py → list_agents()
+  ↓ appelle
+get_agent_service() → AgentService (singleton)
+  ↓ appelle
+services/agent_service.py → list_agents()
+  ↓ lit
+ai_agents/agents/registry.py → AGENT_REGISTRY
+  ↓ pour chaque agent
+ai_agents/agents/*/config.yaml
+  ↓ crée
+api/models/agent.py → AgentInfo objects
+  ↓ retourne
+AgentListResponse
+  ↓ sérialise JSON
+CLIENT reçoit la liste
+
+2.3. REQUÊTE POST /api/agents/{agent_id}/run
+--------------------------------------------
+
+CLIENT
+  ↓ HTTP POST avec AgentRunRequest JSON
+FASTAPI (main.py)
+  ↓ route vers
+api/routes/agents.py → run_agent()
+  ↓ valide avec
+api/models/agent.py → AgentRunRequest (Pydantic)
+  ↓ appelle
+get_agent_service() → AgentService (singleton)
+  ↓ vérifie
+services/agent_service.py → agent_exists()
+  ↓ consulte
+ai_agents/agents/registry.py → AGENT_REGISTRY
+  ↓ génère UUID
+uuid.uuid4() → run_id
+  ↓ lance en arrière-plan
+FastAPI BackgroundTasks → execute_agent()
+  ↓ retourne immédiatement
+AgentRunResponse (status: running)
+  ↓ pendant ce temps, en parallèle
+services/agent_service.py → execute_agent()
+  ↓ charge agent
+ai_agents/agents/registry.py → get_agent()
+  ↓ exécute
+agent.run(input_data)
+  ↓ sauvegarde résultat
+AgentService.agent_runs[agent_id][run_id]
+
+2.4. REQUÊTE GET /api/agents/{agent_id}/status
+----------------------------------------------
+
+CLIENT
+  ↓ HTTP GET /api/agents/{agent_id}/status?run_id=xxx
+FASTAPI (main.py)
+  ↓ route vers
+api/routes/agents.py → get_agent_status()
+  ↓ appelle
+get_agent_service() → AgentService (singleton)
+  ↓ appelle
+services/agent_service.py → get_agent_status()
+  ↓ consulte
+AgentService.running_agents (agents en cours)
+AgentService.agent_runs (historique)
+  ↓ crée
+api/models/agent.py → AgentStatusResponse
+  ↓ retourne JSON
+CLIENT reçoit le statut
+
+================================================================================
+3. GESTION DES DONNÉES EN MÉMOIRE
+================================================================================
+
+3.1. SINGLETON PATTERN
+----------------------
+
+PROBLÈME :
+Chaque requête HTTP créait un nouveau AgentService, perdant les données.
+
+SOLUTION :
+```python
+# Dans api/routes/agents.py
+_agent_service = None
+
+def get_agent_service() -> AgentService:
+    global _agent_service
+    if _agent_service is None:
+        _agent_service = AgentService()
+    return _agent_service
+```
+
+RÉSULTAT :
+Une seule instance d'AgentService pour toute l'application.
+
+3.2. STRUCTURE DES DONNÉES
+--------------------------
+
+AgentService contient :
+
+self.running_agents = {
+    "sales_assistant": {
+        "run_id": "abc-123",
+        "started_at": datetime(2024, 1, 1, 10, 0, 0),
+        "status": AgentStatus.RUNNING
+    }
+}
+
+self.agent_runs = {
+    "sales_assistant": {
+        "abc-123": AgentRunResponse(
+            run_id="abc-123",
+            agent_id="sales_assistant",
+            status=AgentStatus.COMPLETED,
+            started_at=datetime(2024, 1, 1, 10, 0, 0),
+            completed_at=datetime(2024, 1, 1, 10, 0, 5),
+            result={"customer_query": "test"},
+            error=None,
+            logs=["Starting execution...", "Completed successfully"]
+        ),
+        "def-456": AgentRunResponse(...)
+    },
+    "research": {
+        "ghi-789": AgentRunResponse(...)
+    }
+}
+
+3.3. CYCLE DE VIE D'UNE EXÉCUTION
+---------------------------------
+
+1. POST /run → Création dans running_agents + agent_runs (status: running)
+2. Exécution en cours → Mise à jour des logs
+3. Fin d'exécution → Mise à jour agent_runs (status: completed/failed)
+4. Nettoyage → Suppression de running_agents
+5. GET /status → Lecture depuis agent_runs
+
+================================================================================
+4. INTÉGRATION AVEC LE FRAMEWORK EXISTANT
+================================================================================
+
+4.1. UTILISATION DU REGISTRY
+----------------------------
+
+L'API s'appuie sur le système existant :
+
+ai_agents/agents/registry.py
+  ↓ contient
+AGENT_REGISTRY = {
+    "sales_assistant": SalesAgent,
+    "supervisor": SupervisorAgent,
+    "research": ResearchAgent,
+}
+
+L'API utilise ce registry pour :
+- Lister les agents disponibles
+- Vérifier qu'un agent existe
+- Instancier les agents pour exécution
+
+4.2. CHARGEMENT DES CONFIGURATIONS
+----------------------------------
+
+Pour chaque agent, l'API :
+
+1. Appelle agent_class.load_config()
+2. Lit le fichier YAML (ex: sales_assistant/config.yaml)
+3. Parse la configuration (workflow, model, memory, etc.)
+4. Expose via GET /api/agents/{id}/config
+
+4.3. EXÉCUTION DES AGENTS
+-------------------------
+
+L'API utilise le système existant :
+
+1. get_agent(agent_id) → Instancie l'agent
+2. agent.run(input_data) → Exécute le workflow
+3. Récupère le résultat final
+
+================================================================================
+5. GESTION DES ERREURS ET LOGGING
+================================================================================
+
+5.1. FLUX D'ERREURS
+-------------------
+
+Exception dans agent.run()
+  ↓ capturée par
+services/agent_service.py → execute_agent()
+  ↓ logged avec
+core/logging.py → logger.error()
+  ↓ sauvegardée dans
+AgentRunResponse.error
+  ↓ retournée via
+GET /api/agents/{id}/runs/{run_id}
+
+5.2. TYPES D'ERREURS GÉRÉES
+---------------------------
+
+- 404 : Agent ou run inexistant
+- 422 : Données invalides (Pydantic)
+- 500 : Erreurs d'exécution
+- Timeout : Exécution trop longue
+
+5.3. LOGGING STRUCTURÉ
+----------------------
+
+core/logging.py configure :
+- Format des logs
+- Niveaux (DEBUG, INFO, ERROR)
+- Handlers (console)
+
+Logs générés :
+- Démarrage/arrêt serveur
+- Début/fin d'exécution d'agent
+- Erreurs avec stack trace
+- Requêtes HTTP (via Uvicorn)
+
+================================================================================
+6. CONFIGURATION ET ENVIRONNEMENT
+================================================================================
+
+6.1. FLUX DE CONFIGURATION
+--------------------------
+
+.env file
+  ↓ lu par
+core/config.py → Settings (Pydantic)
+  ↓ validé et typé
+get_settings() → Instance singleton
+  ↓ utilisé par
+main.py, start_api.py, agent_service.py
+
+6.2. VARIABLES IMPORTANTES
+--------------------------
+
+OPENAI_API_KEY : Passée aux agents pour LLM
+HOST/PORT : Configuration serveur
+DEBUG : Mode développement
+MAX_EXECUTION_TIME : Timeout des agents
+ALLOWED_HOSTS : CORS
+
+================================================================================
+7. EXTENSIBILITÉ ET MAINTENANCE
+================================================================================
+
+7.1. AJOUTER UN NOUVEL ENDPOINT
+-------------------------------
+
+1. Définir le modèle dans api/models/agent.py
+2. Ajouter la méthode dans services/agent_service.py
+3. Créer l'endpoint dans api/routes/agents.py
+4. Tester avec examples/api_examples.py
+
+7.2. AJOUTER UN NOUVEAU SERVICE
+-------------------------------
+
+1. Créer services/nouveau_service.py
+2. Définir les modèles dans api/models/
+3. Créer api/routes/nouveau.py
+4. Inclure dans main.py
+
+7.3. MODIFIER LA PERSISTANCE
+----------------------------
+
+Actuellement : Mémoire (dictionnaires)
+Pour production : 
+- Remplacer AgentService.agent_runs par DB
+- Ajouter services/database.py
+- Utiliser SQLAlchemy ou autre ORM
+
+================================================================================
+8. POINTS D'ATTENTION POUR LE DÉVELOPPEMENT
+================================================================================
+
+8.1. THREAD SAFETY
+------------------
+Le singleton AgentService n'est pas thread-safe.
+Pour production : utiliser des locks ou une DB.
+
+8.2. MÉMOIRE
+------------
+Les agent_runs s'accumulent en mémoire.
+Ajouter un nettoyage périodique ou une limite.
+
+8.3. MONITORING
+---------------
+Ajouter des métriques :
+- Nombre d'exécutions
+- Temps d'exécution moyen
+- Taux d'erreur
+
+8.4. SÉCURITÉ
+-------------
+Ajouter :
+- Authentification
+- Rate limiting
+- Validation des inputs
+- Sanitization
+
+================================================================================
+FIN DU GUIDE DES RELATIONS ET FLUX
+================================================================================

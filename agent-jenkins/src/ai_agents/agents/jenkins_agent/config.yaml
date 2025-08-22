@@ -1,0 +1,108 @@
+state_schema:
+  input: object
+  webhook_data: object
+  job_name: string
+  build_number: integer
+  build_status: string
+  jenkins_url: string
+  jenkins_user: string
+  jenkins_token: string
+  jenkins_logs: string
+  jenkinsfile_content: string
+  improvements: array
+  success_analysis: object
+  failure_analysis: object
+  llm_decision: string
+  decision: string
+  action_taken: string
+  notification_content: object
+  metadata: object
+  next_node: string
+  error: string
+workflow:
+  entrypoint: receive_webhook
+  nodes:
+    - name: receive_webhook
+      type: function
+      handler: receive_webhook
+      transitions:
+        next: extract_job_data
+    - name: extract_job_data
+      type: function
+      handler: extract_job_data
+      transitions:
+        next: analyze_status
+    - name: analyze_status
+      type: function
+      handler: analyze_status
+      transitions:
+        conditional: true
+    - name: handle_other_status
+      type: function
+      handler: handle_other_status
+      transitions:
+        next: send_notifications
+    - name: handle_failure
+      type: function
+      handler: handle_failure
+      transitions:
+        next: make_decision
+    - name: make_decision
+      type: function
+      handler: make_decision
+      transitions:
+        next: execute_action
+    - name: execute_action
+      type: function
+      handler: execute_action
+      transitions:
+        next: format_notification
+    - name: format_notification
+      type: function
+      handler: format_notification
+      transitions:
+        next: send_notifications
+    - name: send_notifications
+      type: function
+      handler: send_notifications
+      transitions:
+        next: end_process
+    - name: handle_success
+      type: function
+      handler: handle_success
+      transitions:
+        next: suggest_improvements
+    - name: suggest_improvements
+      type: function
+      handler: suggest_improvements
+      transitions:
+        next: format_notification
+    - name: end_process
+      type: function
+      handler: end_process
+      transitions: {}
+    - name: handle_error
+      type: function
+      handler: handle_error
+      transitions: {}
+  edges:
+    - from: receive_webhook
+      to: extract_job_data
+    - from: extract_job_data
+      to: analyze_status
+    - from: handle_other_status
+      to: send_notifications
+    - from: handle_failure
+      to: make_decision
+    - from: make_decision
+      to: execute_action
+    - from: execute_action
+      to: format_notification
+    - from: format_notification
+      to: send_notifications
+    - from: send_notifications
+      to: end_process
+    - from: handle_success
+      to: suggest_improvements
+    - from: suggest_improvements
+      to: format_notification

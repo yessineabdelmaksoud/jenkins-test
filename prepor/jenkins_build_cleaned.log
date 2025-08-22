@@ -1,0 +1,82 @@
+Démarré par [PERSON_REDACTED] [PERSON_REDACTED]
+Notifying endpoint with url '[URL_REDACTED]'
+Obtained Jenkinsfile from git [URL_REDACTED]
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on [PERSON_REDACTED] in C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+ > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\.git # timeout=10
+Fetching changes from the remote [PERSON_REDACTED] repository
+ > git.exe config remote.origin.url [URL_REDACTED] # timeout=10
+Fetching upstream changes from [URL_REDACTED]
+ > git.exe --version # timeout=10
+ > git --version # 'git version 2.50.1.windows.1'
+ > git.exe fetch --tags --force --progress -- [URL_REDACTED] +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git.exe rev-parse "refs/remotes/origin/main^{commit}" # timeout=10
+Checking out Revision [GIT_COMMIT_REDACTED] (refs/remotes/origin/main)
+ > git.exe config core.sparsecheckout # timeout=10
+ > git.exe checkout -f [GIT_COMMIT_REDACTED] # timeout=10
+Commit message: "Update Jenkinsfile"
+ > git.exe rev-list --no-walk [GIT_COMMIT_REDACTED] # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] echo
+📥 Clonage du repo...
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+ > git.exe rev-parse --resolve-git-dir C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\.git # timeout=10
+Fetching changes from the remote [PERSON_REDACTED] repository
+ > git.exe config remote.origin.url [URL_REDACTED] # timeout=10
+Fetching upstream changes from [URL_REDACTED]
+ > git.exe --version # timeout=10
+ > git --version # 'git version 2.50.1.windows.1'
+ > git.exe fetch --tags --force --progress -- [URL_REDACTED] +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git.exe rev-parse "refs/remotes/origin/main^{commit}" # timeout=10
+Checking out Revision [GIT_COMMIT_REDACTED] (refs/remotes/origin/main)
+ > git.exe config core.sparsecheckout # timeout=10
+ > git.exe checkout -f [GIT_COMMIT_REDACTED] # timeout=10
+Commit message: "Update Jenkinsfile"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Run Python App)
+[Pipeline] echo
+🚀 Lancement de [URL_REDACTED]
+[Pipeline] bat
+
+C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender>python [URL_REDACTED] 
+D�but de l'application
+Traceback (most recent call last):
+  File "C:\ProgramData\Jenkins\.jenkins\workspace\automed-http-sender\[URL_REDACTED]", line 6, in <module>
+    x = 10 / 0
+        ~~~^~~
+ZeroDivisionError: division by zero
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+❌ Pipeline échoué à cause d’une erreur réelle dans le code.
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+Notifying endpoint with url '[URL_REDACTED]'
+Finished: FAILURE
+[REDACTED]

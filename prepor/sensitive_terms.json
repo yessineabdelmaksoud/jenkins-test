@@ -1,0 +1,35 @@
+{
+  "case_insensitive": [
+    "project_alpha",
+    "database_prod",
+    "secret_key",
+    "jenkins_master",
+    "staging_env",
+    "prod_server",
+    "internal_api",
+    "salary",
+    "ssn",
+    "employee_id",
+    "customer_data",
+    "payment_info",
+    "credit_score",
+    "bank_account",
+    "confidential",
+    "proprietary",
+    "classified",
+    "restricted"
+  ],
+  "case_sensitive": [
+    "PROD_DB_HOST",
+    "SECRET_API_KEY",
+    "INTERNAL_TOKEN",
+    "ADMIN_PASSWORD",
+    "ROOT_ACCESS",
+    "MASTER_KEY",
+    "JENKINS_SECRET",
+    "BUILD_TOKEN",
+    "DEPLOY_KEY",
+    "DATABASE_PASSWORD",
+    "MAKMAK"
+  ]
+}

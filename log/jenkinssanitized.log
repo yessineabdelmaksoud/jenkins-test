@@ -1,0 +1,67 @@
+Démarré par [PERSON_REDACTED] [PERSON_REDACTED]
+
+Exécution en tant que SYSTEM
+
+En cours de construction dans le répertoire de travail C:\ProgramData\Jenkins\.jenkins\workspace\yessine
+
+The recommended git tool is: NONE
+
+No credentials specified
+
+Cloning the remote [PERSON_REDACTED] repository
+
+Cloning repository [URL_REDACTED]
+
+ > git.exe init C:\ProgramData\Jenkins\.jenkins\workspace\yessine # timeout=10
+
+Fetching upstream changes from [URL_REDACTED]
+
+ > git.exe --version # timeout=10
+
+ > git --version # 'git version 2.50.1.windows.1'
+
+ > git.exe fetch --tags --force --progress -- [URL_REDACTED] +refs/heads/*:refs/remotes/origin/* # timeout=10
+
+ERROR: Error cloning remote repo 'origin'
+
+[URL_REDACTED]tException: Command "git.exe fetch --tags --force --progress -- [URL_REDACTED] +refs/heads/*:refs/remotes/origin/*" returned status code 128:
+stdout: 
+stderr: fatal: unable to access '[URL_REDACTED] Failed to connect to [URL_REDACTED] port 443 after [DATE_TIME_REDACTED] ms: Could not connect to server
+
+
+	at PluginClassLoader for git-client//[URL_REDACTED]unchCommandIn(CliGitAPIImpl.java:2846)
+
+	at PluginClassLoader for git-client//[URL_REDACTED]unchCommandWithCredentials(CliGitAPIImpl.java:2191)
+
+	at PluginClassLoader for git-client//[URL_REDACTED]iGitAPIImpl$1.execute(CliGitAPIImpl.java:641)
+
+	at PluginClassLoader for git-client//[URL_REDACTED]iGitAPIImpl$2.execute(CliGitAPIImpl.java:883)
+
+	at PluginClassLoader for git//[URL_REDACTED]trieveChanges(GitSCM.java:1221)
+
+	at PluginClassLoader for git//[URL_REDACTED]ERSON_REDACTED])
+
+	at PluginClassLoader for git//[URL_REDACTED]eckout(GitSCM.java:1278)
+
+	at [URL_REDACTED]eckout(SCM.java:540)
+
+	at [URL_REDACTED]eckout(AbstractProject.java:1250)
+
+	at [URL_REDACTED]del.AbstractBuild$[URL_REDACTED]faultCheckout(AbstractBuild.java:649)
+
+	at [URL_REDACTED]eckout(SCMCheckoutStrategy.java:85)
+
+	at [URL_REDACTED]del.AbstractBuild$[URL_REDACTED](AbstractBuild.java:522)
+
+	at [URL_REDACTED].execute(Run.java:1860)
+
+	at [URL_REDACTED](FreeStyleBuild.java:44)
+
+	at [URL_REDACTED]sourceController.execute(ResourceController.java:101)
+
+	at [URL_REDACTED](Executor.java:454)
+
+ERROR: Error cloning remote repo 'origin'
+
+Finished: FAILURE
+

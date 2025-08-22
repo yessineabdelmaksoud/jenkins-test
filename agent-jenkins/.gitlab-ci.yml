@@ -1,0 +1,37 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+stages:
+  - cleanup
+  - setup
+  - check
+
+cleanup_workspace:
+  stage: cleanup
+  script:
+    - Remove-Item -Path * -Recurse -Force -ErrorAction SilentlyContinue
+
+setup_venv:
+  stage: setup
+  script:
+    - python -m venv venv
+    - .\venv\Scripts\Activate.ps1
+    - python -m pip install --upgrade pip
+  cache:
+    key: venv
+    paths:
+      - venv/
+
+syntax_checker:
+  stage: check
+  needs: [setup_venv]
+  cache:
+    key: venv
+    paths:
+      - venv/
+  script:
+    - .\venv\Scripts\Activate.ps1
+    - pip install pre-commit pre-commit-hooks black flake8
+    - pre-commit install
+    - pre-commit run --all-files

@@ -1,0 +1,86 @@
+repos:
+  - repo: local
+    hooks:
+      - id: trailing-whitespace
+        name: Trailing Whitespace
+        entry: trailing-whitespace-fixer
+        language: python
+        types: [text]
+
+      - id: end-of-file-fixer
+        name: End of File Fixer
+        entry: end-of-file-fixer
+        language: python
+        types: [ text ]
+
+      - id: check-yaml
+        name: Check YAML
+        entry: check-yaml
+        language: python
+        types: [yaml]
+
+      - id: check-json
+        name: Check JSON
+        entry: check-json
+        language: python
+        types: [json]
+
+      - id: flake8
+        name: Flake8 Linter
+        entry: flake8
+        language: system
+        types: [python]
+
+      - id: check-added-large-files
+        name: Check Added Large Files
+        entry: check-added-large-files
+        language: python
+        args: ['--maxkb=500']
+
+      - id: check-ast
+        name: Check AST
+        entry: check-ast
+        language: python
+        types: [python]
+
+      - id: check-case-conflict
+        name: Check Case Conflict
+        entry: check-case-conflict
+        language: python
+        types: [text]
+
+      - id: check-docstring-first
+        name: Check Docstring First
+        entry: check-docstring-first
+        language: python
+        types: [python]
+
+      - id: check-executables-have-shebangs
+        name: Check Executables Have Shebangs
+        entry: check-executables-have-shebangs
+        language: python
+        types: [text]
+
+      - id: check-merge-conflict
+        name: Check Merge Conflict
+        entry: check-merge-conflict
+        language: python
+        types: [text]
+
+      - id: check-symlinks
+        name: Check Symlinks
+        entry: check-symlinks
+        language: python
+        types: [text]
+
+      - id: check-toml
+        name: Check TOML
+        entry: check-toml
+        language: python
+        types: [toml]
+
+      - id: check-xml
+        name: Check XML
+        entry: check-xml
+        language: python
+        types: [xml]

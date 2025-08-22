@@ -1,0 +1,41 @@
+workflow:
+  entrypoint: start
+  error_node: error_handler
+
+  nodes:
+    - name: start
+      handler: start_node
+      type: entry
+    - name: query_db
+      handler: query_database
+      type: function
+    - name: decide
+      handler: summarize_answer
+      type: decision
+    - name: finish
+      handler: end_node
+      type: exit
+
+  edges:
+      - from: start
+        to: query_db
+      - from: query_db
+        to: decide
+
+state_schema:
+  customer_query: string
+  db_result: object
+  summary: string
+  result: string
+  error: string
+
+memory:
+  type: vector
+  config:
+    embedding_model: openai
+    store_path: ./vector_store
+ 
+model:
+  provider: openai
+  model_name: deepseek/deepseek-r1-0528:free
+  base_url: https://openrouter.ai/api/v1

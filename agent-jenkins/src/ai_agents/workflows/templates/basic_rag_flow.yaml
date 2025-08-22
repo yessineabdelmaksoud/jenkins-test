@@ -1,0 +1,29 @@
+workflow:
+  entrypoint: start
+  nodes:
+    - name: start
+      type: function
+      handler: start_node
+      transitions:
+        next: search
+    - name: search
+      type: function
+      handler: search_knowledge
+      transitions:
+        next: summarize
+    - name: summarize
+      type: function
+      handler: summarize_results
+      transitions:
+        next: end
+    - name: end
+      type: function
+      handler: end_node
+      transitions: {}
+  edges:
+    - from: start
+      to: search
+    - from: search
+      to: summarize
+    - from: summarize
+      to: end

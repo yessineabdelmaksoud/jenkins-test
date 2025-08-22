@@ -1,0 +1,5 @@
+# Installation des dépendances pour le preprocessing pipeline
+pip install presidio-analyzer presidio-anonymizer spacy
+
+# Télécharger le modèle spaCy pour l'anglais
+python -m spacy download en_core_web_sm
